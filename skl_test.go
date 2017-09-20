@@ -346,6 +346,60 @@ func TestIteratorSet(t *testing.T) {
 	require.Equal(t, 1, lengthRev(l))
 }
 
+func TestIteratorSetMeta(t *testing.T) {
+	l := NewSkiplist(NewArena(arenaSize))
+
+	var it Iterator
+	it.Init(l)
+
+	var it2 Iterator
+	it2.Init(l)
+
+	// SetMeta when iterator position is invalid.
+	require.Panics(t, func() { it.SetMeta(0) })
+
+	// SetMeta new value.
+	it.Add([]byte("00001"), []byte("00001a"), 100)
+	val := it.Value()
+	err := it.SetMeta(200)
+	require.Nil(t, err)
+	require.EqualValues(t, "00001a", it.Value())
+	require.True(t, &val[0] == &it.Value()[0], "Value bytes should not be reused")
+	require.EqualValues(t, 200, it.Meta())
+
+	// SetMeta new lower value.
+	err = it.SetMeta(50)
+	require.Nil(t, err)
+	require.EqualValues(t, "00001a", it.Value())
+	require.False(t, &val[0] == &it.Value()[0], "Value bytes should not be reused")
+	require.EqualValues(t, 50, it.Meta())
+
+	// Try to set meta that's been updated by a different iterator.
+	it2.Seek([]byte("00001"))
+	err = it.SetMeta(300)
+	require.Nil(t, err)
+	err = it2.SetMeta(400)
+	require.Equal(t, ErrRecordUpdated, err)
+	require.EqualValues(t, 300, it2.Meta())
+	err = it2.SetMeta(400)
+	require.Nil(t, err)
+	require.EqualValues(t, 400, it2.Meta())
+
+	// Try to set value that's been deleted by a different iterator.
+	it.Seek([]byte("00001"))
+	it2.Seek([]byte("00001"))
+	err = it.Delete()
+	require.Nil(t, err)
+	err = it.Add([]byte("00002"), []byte("00002"), 500)
+	require.Nil(t, err)
+	err = it2.SetMeta(600)
+	require.Equal(t, ErrRecordDeleted, err)
+	require.EqualValues(t, 400, it2.Meta())
+
+	require.Equal(t, 1, length(l))
+	require.Equal(t, 1, lengthRev(l))
+}
+
 func TestIteratorDelete(t *testing.T) {
 	l := NewSkiplist(NewArena(arenaSize))
 

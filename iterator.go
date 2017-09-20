@@ -243,6 +243,26 @@ func (it *Iterator) Set(val []byte, meta uint16) error {
 	return it.trySetValue(new)
 }
 
+// SetMeta updates the meta value of the current iteration record if it has not
+// been updated or deleted since iterating or seeking to it. If the record has
+// been updated, then SetMeta positions the iterator on the most current value
+// and returns ErrRecordUpdated. If the record has been deleted, then SetMeta
+// keeps the iterator positioned on the current record with the current value
+// and returns ErrRecordDeleted.
+func (it *Iterator) SetMeta(meta uint16) error {
+	// Try to reuse the same value bytes. Do this only in the case where meta
+	// is increasing, in order to avoid cases where the meta is changed, then
+	// changed back to the original value, which would make it impossible to
+	// detect updates had occurred in the interim.
+	if meta > decodeMeta(it.value) {
+		valOffset, valSize := decodeValue(it.value)
+		new := encodeValue(valOffset, valSize, meta)
+		return it.trySetValue(new)
+	}
+
+	return it.Set(it.Value(), meta)
+}
+
 // Delete marks the current iterator record as deleted from the store if it
 // has not been updated since iterating or seeking to it. If the record has
 // been updated, then Delete positions the iterator on the most current value
@@ -388,4 +408,14 @@ func (it *Iterator) seekForBaseSplice(key []byte) (prev, next *node, found bool)
 	}
 
 	return
+}
+
+// IsSameArray returns true if the slices are the same length and the array
+// underlying the two slices is the same. Always returns false for empty arrays.
+func isSameArray(val1, val2 []byte) bool {
+	if len(val1) == len(val2) && len(val1) > 0 {
+		return &val1[0] == &val2[0]
+	}
+
+	return false
 }
