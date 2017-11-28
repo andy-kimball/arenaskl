@@ -65,7 +65,7 @@ func (it *Iterator) Value() []byte {
 	return it.arena.GetBytes(valOffset, valSize)
 }
 
-// Value returns the metadata at the current position.
+// Meta returns the metadata at the current position.
 func (it *Iterator) Meta() uint16 {
 	return decodeMeta(it.value)
 }

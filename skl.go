@@ -125,9 +125,10 @@ func NewSkiplist(arena *Arena) *Skiplist {
 
 // Height returns the height of the highest tower within any of the nodes that
 // have ever been allocated as part of this skiplist.
-func (s *Skiplist) Height() uint32 {
-	return atomic.LoadUint32(&s.height)
-}
+func (s *Skiplist) Height() uint32 { return atomic.LoadUint32(&s.height) }
+
+// Arena returns the arena backing this skiplist.
+func (s *Skiplist) Arena() *Arena { return s.arena }
 
 // Size returns the number of bytes that have allocated from the arena.
 func (s *Skiplist) Size() uint32 { return s.arena.Size() }
