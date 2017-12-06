@@ -34,10 +34,7 @@ func (l *links) init(prevOffset, nextOffset uint32) {
 type node struct {
 	// Immutable fields, so no need to lock to access key.
 	keyOffset uint32
-	keySize   uint16
-
-	// Height of this node's tower.
-	height uint16
+	keySize   uint32
 
 	// Multiple parts of the value are encoded as a single uint64 so that it
 	// can be atomically loaded and stored:
@@ -65,19 +62,17 @@ func newNode(arena *Arena, height uint32) (nd *node, err error) {
 	// is less than maxHeight.
 	unusedSize := (maxHeight - int(height)) * linksSize
 
-	nodeOffset, err := arena.Alloc(uint16(MaxNodeSize-unusedSize), Align8)
+	nodeOffset, err := arena.Alloc(uint32(MaxNodeSize-unusedSize), Align8)
 	if err != nil {
 		return
 	}
 
 	nd = (*node)(arena.GetPointer(nodeOffset))
-	nd.height = uint16(height)
-
 	return
 }
 
 func (n *node) getKey(arena *Arena) []byte {
-	return arena.GetBytes(n.keyOffset, uint16(n.keySize))
+	return arena.GetBytes(n.keyOffset, n.keySize)
 }
 
 func (n *node) nextOffset(h int) uint32 {
