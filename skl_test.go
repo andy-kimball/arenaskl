@@ -475,7 +475,7 @@ func TestConcurrentAdd(t *testing.T) {
 	}
 
 	for f := 0; f < 2; f++ {
-		go func() {
+		go func(id int) {
 			var it Iterator
 			it.Init(l)
 
@@ -483,7 +483,7 @@ func TestConcurrentAdd(t *testing.T) {
 				start[i].Wait()
 
 				key := newValue(i)
-				val := []byte(fmt.Sprintf("%d: %05d", f, i))
+				val := []byte(fmt.Sprintf("%d: %05d", id, i))
 				if it.Add(key, val, 0) == nil {
 					it.Seek(key)
 					require.EqualValues(t, val, it.Value())
@@ -491,7 +491,7 @@ func TestConcurrentAdd(t *testing.T) {
 
 				end[i].Done()
 			}
-		}()
+		}(f)
 	}
 
 	for i := 0; i < n; i++ {
