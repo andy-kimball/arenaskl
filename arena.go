@@ -19,13 +19,14 @@ package arenaskl
 
 import (
 	"errors"
+	"math"
 	"sync/atomic"
 	"unsafe"
 )
 
 // Arena should be lock-free.
 type Arena struct {
-	n   uint32
+	n   uint64
 	buf []byte
 }
 
@@ -55,24 +56,37 @@ func NewArena(size uint32) *Arena {
 }
 
 func (a *Arena) Size() uint32 {
-	return atomic.LoadUint32(&a.n)
+	s := atomic.LoadUint64(&a.n)
+	if s > math.MaxUint32 {
+		// Saturate at MaxUint32.
+		return math.MaxUint32
+	}
+	return uint32(s)
 }
 
 func (a *Arena) Reset() {
-	atomic.StoreUint32(&a.n, 1)
+	atomic.StoreUint64(&a.n, 1)
 }
 
 func (a *Arena) Alloc(size uint32, align Align) (uint32, error) {
+	// Verify that the arena isn't already full.
+	origSize := atomic.LoadUint64(&a.n)
+	if int(origSize) > len(a.buf) {
+		return 0, ErrArenaFull
+	}
+
 	// Pad the allocation with enough bytes to ensure the requested alignment.
 	padded := uint32(size) + uint32(align)
 
-	newSize := atomic.AddUint32(&a.n, padded)
+	// Use 64-bit arithmetic to protect against overflow.
+	newSize := atomic.AddUint64(&a.n, uint64(padded))
 	if int(newSize) > len(a.buf) {
+		// Doubles as a check against newSize > math.MaxUint32.
 		return 0, ErrArenaFull
 	}
 
 	// Return the aligned offset.
-	offset := (newSize - padded + uint32(align)) & ^uint32(align)
+	offset := (uint32(newSize) - padded + uint32(align)) & ^uint32(align)
 	return offset, nil
 }
 
