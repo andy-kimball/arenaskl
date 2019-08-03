@@ -172,11 +172,11 @@ func (s *Skiplist) randomHeight() uint32 {
 }
 
 func (s *Skiplist) allocKey(key []byte) (keyOffset uint32, keySize uint32, err error) {
-	if len(key) > math.MaxUint32 {
+	keySize = uint32(len(key))
+	if keySize > math.MaxUint32 {
 		panic("key is too large")
 	}
 
-	keySize = uint32(len(key))
 	keyOffset, err = s.arena.Alloc(keySize, Align1)
 	if err == nil {
 		copy(s.arena.GetBytes(keyOffset, keySize), key)
