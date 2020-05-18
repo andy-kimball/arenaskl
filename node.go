@@ -62,7 +62,7 @@ func newNode(arena *Arena, height uint32) (nd *node, err error) {
 	// is less than maxHeight.
 	unusedSize := (maxHeight - int(height)) * linksSize
 
-	nodeOffset, err := arena.Alloc(uint32(MaxNodeSize-unusedSize), Align8)
+	nodeOffset, err := arena.Alloc(uint32(MaxNodeSize-unusedSize), uint32(unusedSize), Align8)
 	if err != nil {
 		return
 	}
