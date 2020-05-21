@@ -64,6 +64,10 @@ func (a *Arena) Size() uint32 {
 	return uint32(s)
 }
 
+func (a *Arena) Cap() uint32 {
+	return uint32(len(a.buf))
+}
+
 func (a *Arena) Reset() {
 	atomic.StoreUint64(&a.n, 1)
 }
