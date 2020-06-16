@@ -15,8 +15,6 @@
  * limitations under the License.
  */
 
-// +build race
-
 package arenaskl
 
 import (
