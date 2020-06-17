@@ -743,8 +743,7 @@ func randomKey(rng *rand.Rand) []byte {
 	return b
 }
 
-// Standard test. Some fraction is read. Some fraction is write. Writes have
-// to go through mutex lock.
+// Standard test. Some fraction is read. Some fraction is write.
 func BenchmarkReadWrite(b *testing.B) {
 	value := newValue(123)
 	for i := 0; i <= 10; i++ {

@@ -47,9 +47,10 @@ import (
 	"bytes"
 	"errors"
 	"math"
-	"math/rand"
 	"sync/atomic"
 	"unsafe"
+
+	"github.com/andy-kimball/arenaskl/internal/fastrand"
 )
 
 const (
@@ -162,7 +163,7 @@ func (s *Skiplist) newNode(key, val []byte, meta uint16) (nd *node, height uint3
 }
 
 func (s *Skiplist) randomHeight() uint32 {
-	rnd := rand.Uint32()
+	rnd := fastrand.Uint32()
 	h := uint32(1)
 	for h < maxHeight && rnd <= probabilities[h] {
 		h++
